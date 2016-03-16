@@ -1,29 +1,35 @@
 #!/usr/bin/env sh
 
-PLUGIN_NAME=$1
+set -e
+
+PLUGIN_PATH=$1
 CONFIGURABLE=$2
+PLUGIN_NAME=$(basename "$PLUGIN_PATH")
 MODULE_DIR="$PLUGIN_NAME"
-PLUGIN_PATH=/home/stl/htdocs/omeka/Omeka/plugins/$PLUGIN_NAME
 
 mkdir modules/$MODULE_DIR
 cd modules/$MODULE_DIR
 
-mkdir asset
+copy_dir() {
+	source=$1
+	dest=$2
+	options=$3
+
+	if [ -e "$source" ]; then
+		mkdir -p "$dest"
+		cp $options $source/* "$dest"
+	fi
+}
+
 mkdir config
-mkdir language
-mkdir -p src/Controller
-mkdir -p src/View/Helper
-mkdir view
-
-cp $PLUGIN_PATH/controllers/* src/Controller
-cp $PLUGIN_PATH/languages/* language
-cp -r $PLUGIN_PATH/libraries/$PluginName/* src
-cp $PLUGIN_PATH/plugin.ini config/module.ini
-cp $PLUGIN_PATH/${PLUGIN_NAME}Plugin.php Module.php
-cp $PLUGIN_PATH/views/helpers/* src/View/Helper
-cp -r $PLUGIN_PATH/views/* view
-rm -rf view/helpers
-
+cp "$PLUGIN_PATH/plugin.ini" "config/module.ini"
+cp "$PLUGIN_PATH/${PLUGIN_NAME}Plugin.php" "Module.php"
+copy_dir "$PLUGIN_PATH/controllers" "src/Controller"
+copy_dir "$PLUGIN_PATH/languages" "language"
+copy_dir "$PLUGIN_PATH/libraries/$PluginName" "src" "-r"
+copy_dir "$PLUGIN_PATH/views/helpers" "src/View/Helper"
+copy_dir "$PLUGIN_PATH/views" "view" "-r"
+rm -rf "view/helpers"
 
 sed -i '/\[info\]/d' config/module.ini 
 sed -i -- 's/^link/module_link/' config/module.ini
